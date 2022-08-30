@@ -1,0 +1,108 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code.
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*.
+
+## 1. Abstract
+
+Heart failure -- sometimes known as congestive heart failure --- occurs when the heart muscle doesn't pump blood as well as it should. When this happens, blood often backs up, flows back and fluid can build up in the lungs, causing shortness of breath. Certain heart conditions, such as narrowed arteries in the heart (coronary artery disease) or high blood pressure, gradually leave the heart too weak or too stiff to fill and pump blood properly, and can lead to heart failure. Heart failure is a serious condition with high prevalence (about 2% in the adult population in developed countries, and more than 8% in patients older than 75 years). The cost for society is high, reaching up to 2% of total healthcare expenditure in developed countries. Hence the importance of being able to analyse and predict what factors are more likely to shorten the duration of life after heart failure is diagnosed
+
+## 2. Dataset
+
+This dataset contains the medical records of 299 patients who suffered heart failure. The data has been collected during their follow-up period, and each patient observation has 13 clinical features.
+
+Thirteen (13) clinical features:
+
+-   age: age of the patient (in years)
+-   anaemia (0 for no, 1 for yes): decrease of red blood cells or hemoglobin (boolean)
+-   high blood pressure (0 for no, 1 for yes): if the patient has hypertension (boolean)
+-   creatinine phosphokinase (CPK): level of the CPK enzyme in the blood (mcg/L)
+-   diabetes (0 for no, 1 for yes): if the patient has diabetes (boolean)
+-   ejection fraction: percentage of blood leaving the heart at each contraction (percentage)
+-   platelets: platelets in the blood (kiloplatelets/mL)
+-   sex: woman or man (binary)
+-   serum creatinine: level of serum creatinine in the blood (mg/dL)
+-   serum sodium: level of serum sodium in the blood (mEq/L)
+-   smoking: if the patient smokes or not (boolean)
+-   time: follow-up period (days)
+-   [target] death event (0 for censored, 1 for death): if the patient deceased during the follow-up period (boolean)
+
+Data source: <https://archive.ics.uci.edu/ml/machine-learning-databases/00519/>
+
+## 3. Data exploration
+
+```{r}
+#load relevant packages
+
+
+install.packages("survminer")
+library(survminer)
+
+
+library(survival)
+library(ggplot2)
+library(tidyverse)
+
+if(!require(My.stepwise)){
+    install.packages("My.stepwise")
+    library(My.stepwise)
+}
+
+if(!require(corrr)){
+    install.packages("corrr")
+    library(corrr)
+}
+
+if(!require(gtools)){
+    install.packages("gtools")
+    library(gtools)
+}
+
+if(!require(caTools)){
+    install.packages("caTools")
+    library(caTools)
+}
+
+if(!require(MASS)){
+    install.packages("MASS")
+    library(MASS)
+}
+
+
+```
+
+```{r}
+# load dataset
+
+df <- read.csv("https://archive.ics.uci.edu/ml/machine-learning-databases/00519/heart_failure_clinical_records_dataset.csv")
+df
+```
+
+```{r}
+# Let's look at a summary of the explanatory variables
+summary(df)
+```
+
+```{r}
+summary(df$age)
+```
+
+```{r}
+# Quick view at the target variable distribution: target DEATH EVENT is a bollean 
+table(df$DEATH_EVENT)
+```
+
+```{r}
+### Check for Missing Values
+colSums(is.na(df))
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
