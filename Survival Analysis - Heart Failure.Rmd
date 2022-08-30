@@ -5,13 +5,15 @@ output: html_notebook
 
 This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code.
 
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*.
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*.\
 
-## 1. Abstract
+# 1. Introduction
+
+## 1.1. Abstract
 
 Heart failure -- sometimes known as congestive heart failure --- occurs when the heart muscle doesn't pump blood as well as it should. When this happens, blood often backs up, flows back and fluid can build up in the lungs, causing shortness of breath. Certain heart conditions, such as narrowed arteries in the heart (coronary artery disease) or high blood pressure, gradually leave the heart too weak or too stiff to fill and pump blood properly, and can lead to heart failure. Heart failure is a serious condition with high prevalence (about 2% in the adult population in developed countries, and more than 8% in patients older than 75 years). The cost for society is high, reaching up to 2% of total healthcare expenditure in developed countries. Hence the importance of being able to analyse and predict what factors are more likely to shorten the duration of life after heart failure is diagnosed
 
-## 2. Dataset
+## 1.2. Dataset
 
 This dataset contains the medical records of 299 patients who suffered heart failure. The data has been collected during their follow-up period, and each patient observation has 13 clinical features.
 
@@ -33,7 +35,15 @@ Thirteen (13) clinical features:
 
 Data source: <https://archive.ics.uci.edu/ml/machine-learning-databases/00519/>
 
-## 3. Data exploration
+## 1.3. Methodology
+
+-   General description of data
+-   Using Kaplan-Meir for the entire dataset and categorical variables
+-   Build Cox Proportional Hazard model.
+-   Variable selection on Cox model to determine the most relevant variables.
+-   Model diagnostics and tests.
+
+# 2. Data exploration
 
 ```{r}
 #load relevant packages
@@ -99,6 +109,17 @@ table(df$DEATH_EVENT)
 ```{r}
 ### Check for Missing Values
 colSums(is.na(df))
+```
+
+## 3. Models
+
+### 3.1. Kaplan Meir
+
+```{r}
+df_time=as.vector(df$time) 
+df_death=as.vector(df$DEATH_EVENT) 
+df_fit = surv_fit(Surv(df_time,df_death)~1, data=df) 
+plot(df_fit, main = "Kaplan-Meier Survival Function", xlab = "Time in Days", ylab = "S(t)", col = "blue")
 ```
 
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
