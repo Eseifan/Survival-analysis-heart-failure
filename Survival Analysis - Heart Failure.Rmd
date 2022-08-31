@@ -195,21 +195,9 @@ survdiff (Surv(df_time,df_death)~df_blood, data=df)
 ## 3.2. Cox proportional hazard model:
 
 ```{r}
+
 # splitting data between train and test sets
-data_split <- sample.split(df, SplitRatio = 0.80)
-train <- subset(df, data_split == TRUE)
-test <-subset(df, data_split == FALSE)
-```
 
-```{r}
-train_time=as.vector(train$time) 
-train_death=as.vector(train$DEATH_EVENT)
-train
-test
-```
-
-
-```{r}
 set.seed(1234)
 i.training <- sample.int(nrow(df), size = ceiling(4*nrow(df)/5), replace = FALSE)
 i.testing <- setdiff(seq_len(nrow(df)), i.training)
@@ -217,11 +205,6 @@ df_training <- df[i.training, ]
 df_testing <- df[i.testing, ]
 
 df_training
-```
-
-```{r}
-library(tidyverse)
-
 ```
 
 
