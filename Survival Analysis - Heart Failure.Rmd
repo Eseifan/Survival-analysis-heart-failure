@@ -45,6 +45,13 @@ Data source: <https://archive.ics.uci.edu/ml/machine-learning-databases/00519/>
 
 # 2. Data exploration
 
+
+
+
+
+
+
+
 ```{r}
 #load relevant packages
 
@@ -82,6 +89,9 @@ if(!require(MASS)){
     library(MASS)
 }
 
+
+install.packages('pixiedust')
+library(pixiedust)
 
 ```
 
@@ -171,6 +181,8 @@ plot(df_blood_fit, main = "Kaplan-Meier Survival Function for Blood Pressure", x
 legend("bottomleft",legend = c("Non high blood pressure","High blood pessure"),fill=c("blue","red"))
 ```
 ```{r}
+#Looking at the survdiff functions:
+
 survdiff (Surv(df_time,df_death)~sex, data=df)
 survdiff (Surv(df_time,df_death)~df_anaemia, data=df)
 survdiff (Surv(df_time,df_death)~df_smoking, data=df)
@@ -180,8 +192,203 @@ survdiff (Surv(df_time,df_death)~df_blood, data=df)
 ```
 
 
+## 3.2. Cox proportional hazard model:
+
+```{r}
+# splitting data between train and test sets
+data_split <- sample.split(df, SplitRatio = 0.80)
+train <- subset(df, data_split == TRUE)
+test <-subset(df, data_split == FALSE)
+```
+
+```{r}
+train_time=as.vector(train$time) 
+train_death=as.vector(train$DEATH_EVENT)
+train
+test
+```
+
+
+```{r}
+set.seed(1234)
+i.training <- sample.int(nrow(df), size = ceiling(4*nrow(df)/5), replace = FALSE)
+i.testing <- setdiff(seq_len(nrow(df)), i.training)
+df_training <- df[i.training, ]
+df_testing <- df[i.testing, ]
+
+df_training
+```
+
+```{r}
+library(tidyverse)
+
+```
+
+
+```{r}
+#Model with all variables:
+
+
+cox_fit_all_training= coxph(Surv(time,DEATH_EVENT) ~ age + creatinine_phosphokinase + anaemia + diabetes + ejection_fraction + high_blood_pressure + platelets + serum_creatinine + serum_sodium + sex + smoking, df_training)
+
+
+summary (cox_fit_all_training) 
+```
+It is clear that age, ejection_fraction, serum_creatinine are the most significant variables 
+
+```{r}
+
+#Three-variable model:
+cox3_fit_training = coxph(Surv(time,DEATH_EVENT) ~ age +ejection_fraction + serum_creatinine, data=df_training) 
+summary (cox3_fit_training)
+```
+
+
+```{r}
+#compare three-varibale to full model:
+anova(cox3_fit_training, cox_fit_all_training)
+```
+
+
+```{r}
+cox_fit_maic <- step(cox_fit_all_training)
+```
+
+```{r}
+#Compare thre-variable model to seven-variable model:
+
+anova(cox3_fit_training, cox_fit_maic)
+```
+
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
 
 When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file).
 
 The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+```{r}
+#For c-statistic testing we build six models:
+
+
+
+#Three-variable model:
+cox3_fit_training = coxph(Surv(time,DEATH_EVENT) ~ age +ejection_fraction + serum_creatinine, data=df_training) 
+summary (cox3_fit_training)
+
+#Four-variable model:
+cox4_fit_training = coxph(Surv(time,DEATH_EVENT) ~ age +ejection_fraction  + serum_creatinine + anaemia, data=df_training) 
+summary (cox4_fit_training)
+
+
+#Five-variable model:
+cox5_fit_training = coxph(Surv(time,DEATH_EVENT)  ~ age +ejection_fraction + serum_creatinine+ anaemia+ high_blood_pressure, data=df_training) 
+summary (cox5_fit_training)
+
+#Six-variable model:
+cox6_fit_training = coxph(Surv(time,DEATH_EVENT)  ~ age +ejection_fraction + serum_creatinine +anaemia+ high_blood_pressure+ creatinine_phosphokinase , data=df_training) 
+summary (cox6_fit_training)
+
+#Seven-variable model:
+cox7_fit_training = coxph(Surv(time,DEATH_EVENT)  ~ age +ejection_fraction +serum_creatinine +anaemia  + high_blood_pressure+ creatinine_phosphokinase+serum_sodium, data=df_training) 
+summary (cox7_fit_training)
+
+# Eleven-variable (full) model:
+
+cox11_fit_training= coxph(Surv(time,DEATH_EVENT) ~ age + creatinine_phosphokinase + anaemia + diabetes + ejection_fraction + high_blood_pressure + platelets + serum_creatinine + serum_sodium + sex + smoking, df_training)
+
+summary (cox11_fit_training)
+
+
+```
+
+
+
+```{r}
+#add linear predictor (lp) from each model to the testing set
+df_testing$lp_3 <- predict(cox3_fit_training, newdata = df_testing, type = "lp")
+df_testing$lp_4 <- predict(cox4_fit_training, newdata = df_testing, type = "lp")
+df_testing$lp_5 <- predict(cox5_fit_training, newdata = df_testing, type = "lp")
+df_testing$lp_6 <- predict(cox6_fit_training, newdata = df_testing, type = "lp")
+df_testing$lp_7 <- predict(cox7_fit_training, newdata = df_testing, type = "lp")
+df_testing$lp_11 <- predict(cox11_fit_training, newdata = df_testing, type = "lp")
+
+df_testing
+```
+```{r}
+#Build new models on the testing set with lps as varaibles and look at the c-statistic
+models <- list(
+    A = coxph(Surv(time,DEATH_EVENT) ~ lp_3, data = df_testing),
+    B= coxph(Surv(time,DEATH_EVENT) ~ lp_4, data = df_testing),
+    C = coxph(Surv(time,DEATH_EVENT) ~ lp_5, data = df_testing),
+    D = coxph(Surv(time,DEATH_EVENT) ~ lp_6, data = df_testing),
+    E = coxph(Surv(time,DEATH_EVENT) ~ lp_7, data = df_testing),
+    F = coxph(Surv(time,DEATH_EVENT) ~ lp_11, data = df_testing)
+  )
+
+
+map_dbl(models, ~ summary(.)$concordance[1])
+```
+
+
+```{r}
+#compare coefficients:
+
+summary (models$A)
+summary (models$B)
+summary (models$C)
+summary (models$D)
+summary (models$E)
+summary (models$F)
+```
+
+```{r}
+
+```
+
+
+```{r}
+
+#Perform lo-log test on categorical variables:
+
+
+cloglog <- function(x)
+{ log(-log(x))}
+
+ggsurvplot(df_anaemia_fit, fun=cloglog, legend.labs=c("Non anaemia","Anaemia"))+labs(x="Days Before Death",y="Log of survival probability",title="C-log-log plot for anaemia variable")
+ggsurvplot(df_blood_fit, fun=cloglog, legend.labs=c("Non high blood pressure","High blood pessure"))+labs(x="Days Before Death",y="Log of survival probability",title="C-log-log plot for high blood pressure variable")
+```
+
+
+
+```{r}
+
+#Perform row-deletion to test stability of the model
+dat <- df
+cox6_fit_final = coxph(Surv(time,DEATH_EVENT)  ~ age +ejection_fraction + serum_creatinine +anaemia+ high_blood_pressure+ creatinine_phosphokinase , data=dat) 
+summary (cox6_fit_final)
+
+ dfbetas = residuals(cox6_fit_final , type = 'dfbetas')
+dat$dfbetas = sqrt(rowSums(dfbetas^2))
+
+plot(dat$dfbetas , type = 'h')
+ abline(h = 0)
+
+```
+
+```{r}
+
+set.seed(123214)
+i.training <- sample.int(nrow(df), size = ceiling(nrow(df)/75), replace = FALSE)
+i.testing <- setdiff(seq_len(nrow(df)), i.training)
+df_pred <- df[i.training, ]
+
+df_pred
+
+data_new <- df_pred
+pred.cph <- survfit(cox6_fit_final, newdata = data_new, type = "aalen")
+pred.cph
+plot(pred.cph, main = "Survival probability", xlab = "Time in Days ", ylab = "Probability", col= c("blue","red", "green", "brown")) 
+legend("bottomleft",legend = c("P6","P5", "P133", "P17"),fill=c("blue","red", "green", "brown"))
+
+```
+
