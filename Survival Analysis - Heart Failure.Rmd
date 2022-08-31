@@ -122,6 +122,64 @@ df_fit = surv_fit(Surv(df_time,df_death)~1, data=df)
 plot(df_fit, main = "Kaplan-Meier Survival Function", xlab = "Time in Days", ylab = "S(t)", col = "blue")
 ```
 
+```{r}
+quantile(df_fit,c(0.25))$q # survival time at 25th percentile
+quantile(df_fit,c(0.5))$q  # survival time at 50th percentile
+sfit <- summary(df_fit)
+sfit$surv[sfit$time == 50]
+
+```
+The survival function never goes down 0.5, then no median survival rate.
+The probability of surviving past 50 days is 83.1%
+
+```{r}
+
+#KM graphs adjusted for various categorical variables:
+
+
+df_sex = as.factor(df$sex) 
+df_sex_fit = surv_fit(Surv(df_time,df_death)~sex, data=df) 
+
+plot(df_sex_fit, 
+     main = "Kaplan-Meier Survival Function for gender", 
+     xlab = "Time in Days ", 
+     ylab = "S(t)", 
+     col= c("blue","red")) 
+legend("bottomleft",legend = c("Female","Male"),fill=c("blue","red"))
+
+
+df_anaemia = as.factor(df$anaemia) 
+df_anaemia_fit = surv_fit(Surv(df_time,df_death)~df_anaemia, data=df) 
+plot(df_anaemia_fit, main = "Kaplan-Meier Survival Function for Anaemia", xlab = "Time in Days ", ylab = "S(t)", col= c("blue","red")) 
+legend("bottomleft",legend = c("Non anaemia","Anaemia"),fill=c("blue","red"))
+
+
+df_smoking = as.factor(df$smoking) 
+df_smoking_fit = surv_fit(Surv(df_time,df_death)~df_smoking, data=df) 
+plot(df_smoking_fit, main = "Kaplan-Meier Survival Function for smoking", xlab = "Time in Days ", ylab = "S(t)", col= c("blue","red")) 
+legend("bottomleft",legend = c("Non smoking","Smoking"),fill=c("blue","red"))
+
+df_diabetes = as.factor(df$diabetes) 
+df_diabetes_fit = surv_fit(Surv(df_time,df_death)~df_diabetes, data=df) 
+plot(df_diabetes_fit, main = "Kaplan-Meier Survival Function for diabetes", xlab = "Time in Days ", ylab = "S(t)", col= c("blue","red")) 
+legend("bottomleft",legend = c("Non diabete","diabete"),fill=c("blue","red"))
+
+
+df_blood = as.factor(df$high_blood_pressure) 
+df_blood_fit = surv_fit(Surv(df_time,df_death)~df_blood, data=df) 
+plot(df_blood_fit, main = "Kaplan-Meier Survival Function for Blood Pressure", xlab = "Time in Days ", ylab = "S(t)", col= c("blue","red")) 
+legend("bottomleft",legend = c("Non high blood pressure","High blood pessure"),fill=c("blue","red"))
+```
+```{r}
+survdiff (Surv(df_time,df_death)~sex, data=df)
+survdiff (Surv(df_time,df_death)~df_anaemia, data=df)
+survdiff (Surv(df_time,df_death)~df_smoking, data=df)
+survdiff (Surv(df_time,df_death)~df_diabetes, data=df)
+survdiff (Surv(df_time,df_death)~df_blood, data=df)
+
+```
+
+
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
 
 When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file).
